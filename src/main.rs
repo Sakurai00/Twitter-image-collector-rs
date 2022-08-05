@@ -26,6 +26,7 @@ async fn main() -> Result<()> {
     // search
     // Twitter-v2ではminFavの指定が出来ないらしい；；
     // https://developer.twitter.com/en/docs/twitter-api/tweets/search/migrate
+    //TODO eggmodeで書くしかなさそう．v1は仕様そんなに重くないから行ける気がする
     let query = String::from(search_str) + " has:images -is:retweet";
     println!("query: {}", query);
     let tweets = api
