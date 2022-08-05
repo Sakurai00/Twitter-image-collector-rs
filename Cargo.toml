@@ -7,3 +7,7 @@ edition = "2021"
 
 [dependencies]
 twitter-v2 = "0.1.6"
+dotenvy = "0.15.1"
+tokio = {version = "1.20.1", features = ["full"]}
+anyhow = "1.0.59"
+

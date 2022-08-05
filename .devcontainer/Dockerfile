@@ -4,6 +4,12 @@
 ARG VARIANT="buster"
 FROM mcr.microsoft.com/vscode/devcontainers/rust:0-${VARIANT}
 
+ENV CARGO_BUILD_TARGET_DIR=/tmp/target
+
 # [Optional] Uncomment this section to install additional packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
+
+RUN rustup default stable && \
+    rustup update && \
+    rustup component add rustfmt clippy rust-src
