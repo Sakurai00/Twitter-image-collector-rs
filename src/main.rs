@@ -1,18 +1,16 @@
 use anyhow::Result;
 use dotenvy::dotenv;
+use egg_mode::entities::MediaType;
+use egg_mode::search;
+use egg_mode::search::ResultType;
 use std::env;
 use std::fs;
 use std::path::Path;
-use twitter_v2::query::MediaField;
-use twitter_v2::query::TweetField;
-use twitter_v2::{authorization::BearerToken, TwitterApi};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
-    let token = env::var("TW_BEARER_TOKEN").unwrap();
-    let auth = BearerToken::new(token);
-    let api = TwitterApi::new(auth);
+    let token = egg_mode::Token::Bearer(env::var("TW_BEARER_TOKEN").unwrap());
 
     let search_str = "#アークナイツ";
 
@@ -24,31 +22,23 @@ async fn main() -> Result<()> {
     }
 
     // search
-    // Twitter-v2ではminFavの指定が出来ないらしい；；
-    // https://developer.twitter.com/en/docs/twitter-api/tweets/search/migrate
-    //TODO eggmodeで書くしかなさそう．v1は仕様そんなに重くないから行ける気がする
-    let query = String::from(search_str) + " has:images -is:retweet";
+    let query = String::from(search_str) + " filter:images exclude:retweets min_faves:3000";
     println!("query: {}", query);
-    let tweets = api
-        .get_tweets_search_recent(query)
-        .max_results(20)
-        .tweet_fields([TweetField::Entities, TweetField::Text])
-        .media_fields([MediaField::Url, MediaField::Type])
-        .send()
+    let tweets = search::search(query)
+        .result_type(ResultType::Recent)
+        .count(100)
+        .call(&token)
         .await?;
-    let tweets = tweets.into_data();
-    println!("{:#?}", tweets);
 
-    //? Optionのネスト深すぎんか
-    // if let Some(ts) = tweets {
-    //     for t in ts {
-    //         for url in t.entities.expect("a").urls.expect("msg") {
-    //             for i in url.images.unwrap() {
-    //                 println!("{}", i.url);
-    //             }
-    //         }
-    //     }
-    // }
+    for tweet in &tweets.statuses {
+        if let Some(media) = &tweet.extended_entities {
+            for m in &media.media {
+                if m.media_type == MediaType::Photo {
+                    println!("{}", m.media_url_https);
+                }
+            }
+        }
+    }
 
     // download
 
