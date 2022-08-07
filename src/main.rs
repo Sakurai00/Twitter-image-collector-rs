@@ -14,7 +14,7 @@ use url::Url;
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
-    let token = Token::Bearer(env::var("TW_BEARER_TOKEN").unwrap());
+    let token = Token::Bearer(env::var("TW_BEARER_TOKEN").expect("bearer token not found"));
     let config = get_config()?;
 
     for query in &config.queries {
@@ -32,10 +32,15 @@ struct Config {
 }
 
 fn get_config() -> Result<Config> {
-    let file = File::open("./config.json").expect("config.json open error");
+    let current_exe_dir = env::current_exe()?;
+    let base_dir = Path::new(&current_exe_dir).parent().unwrap();
+    let path = base_dir.join("config.json");
+
+    let file = File::open(path).expect("config.json open error");
     let reader = BufReader::new(file);
 
     let config: Config = serde_json::from_reader(reader).expect("json parse error");
+
     Ok(config)
 }
 
