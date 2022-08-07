@@ -4,7 +4,9 @@ use egg_mode::entities::MediaType;
 use egg_mode::search;
 use egg_mode::search::ResultType;
 use egg_mode::Token;
+use serde::{Deserialize, Serialize};
 use std::fs::File;
+use std::io::BufReader;
 use std::path::Path;
 use std::{env, fs};
 use url::Url;
@@ -13,14 +15,28 @@ use url::Url;
 async fn main() -> Result<()> {
     dotenv().ok();
     let token = Token::Bearer(env::var("TW_BEARER_TOKEN").unwrap());
-    let queries = vec!["#アークナイツ"];
+    let config = get_config()?;
 
-    for query in queries {
+    for query in &config.queries {
         set_dir(query)?;
-        search_tweets(&token, query).await?;
+        search_tweets(&token, query, config.minfav).await?;
     }
 
     Ok(())
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Config {
+    minfav: i64,
+    queries: Vec<String>,
+}
+
+fn get_config() -> Result<Config> {
+    let file = File::open("./config.json").expect("config.json open error");
+    let reader = BufReader::new(file);
+
+    let config: Config = serde_json::from_reader(reader).expect("json parse error");
+    Ok(config)
 }
 
 fn set_dir(search_str: &str) -> Result<()> {
@@ -37,8 +53,10 @@ fn set_dir(search_str: &str) -> Result<()> {
     Ok(())
 }
 
-async fn search_tweets(token: &Token, search_str: &str) -> Result<()> {
-    let query = String::from(search_str) + " filter:images exclude:retweets min_faves:3000";
+async fn search_tweets(token: &Token, search_str: &str, minfav: i64) -> Result<()> {
+    let query = String::from(search_str)
+        + " filter:images exclude:retweets min_faves:"
+        + &minfav.to_string();
     println!("query: {}", query);
 
     let tweets = search::search(query)
