@@ -6,4 +6,4 @@
 for linux
 ```sh
 cargo run --release --target-dir ./target
-``
+```
