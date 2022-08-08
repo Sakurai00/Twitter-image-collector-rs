@@ -7,7 +7,7 @@ use egg_mode::Token;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufReader;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{env, fs};
 use url::Url;
 
@@ -31,11 +31,14 @@ struct Config {
     queries: Vec<String>,
 }
 
-fn get_config() -> Result<Config> {
+fn get_base_dir() -> Result<PathBuf> {
     let current_exe_dir = env::current_exe()?;
     let base_dir = Path::new(&current_exe_dir).parent().unwrap();
-    let path = base_dir.join("config.json");
+    Ok(base_dir.to_path_buf())
+}
 
+fn get_config() -> Result<Config> {
+    let path = get_base_dir()?.join("config.json");
     let file = File::open(path).expect("config.json open error");
     let reader = BufReader::new(file);
 
@@ -45,9 +48,7 @@ fn get_config() -> Result<Config> {
 }
 
 fn set_dir(search_str: &str) -> Result<()> {
-    let current_exe_dir = env::current_exe()?;
-    let base_dir = Path::new(&current_exe_dir).parent().unwrap();
-    let path = base_dir.join("images").join(search_str);
+    let path = get_base_dir()?.join("images").join(search_str);
 
     if !path.exists() {
         fs::create_dir_all(&path).expect("create dir error");
