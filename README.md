@@ -1,6 +1,6 @@
 # Twitter-image-collector-rs
 
-## Conpile
+## Compile
 for linux
 ```sh
 cargo run --release --target-dir ./target
